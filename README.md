@@ -194,12 +194,47 @@ perplexity_agent/
 ├── perplexity_agent/
 │   ├── __init__.py      # 包初始化
 │   ├── agent.py         # 核心 Agent 类
-│   └── cli.py           # 命令行接口
+│   ├── cli.py           # 命令行接口
+│   └── api.py           # Web API 服务
 ├── example.py           # 使用示例
+├── requirements.txt     # pip 依赖文件
 ├── pyproject.toml       # Poetry 配置文件
+├── API_DEPLOY.md        # API 部署文档
 ├── README.md           # 项目文档
 └── .gitignore          # Git 忽略文件
 ```
+
+## API 部署
+
+将 Agent 部署为 Web API 服务，支持 HTTP 调用。
+
+### 快速开始
+
+```bash
+# 1. 安装依赖
+pip install -r requirements.txt
+
+# 2. 设置 API key
+export PERPLEXITY_API_KEY="your-api-key"
+
+# 3. 启动服务
+uvicorn perplexity_agent.api:app --host 0.0.0.0 --port 8000
+```
+
+启动后访问：
+- API 文档: http://localhost:8000/docs
+- 健康检查: http://localhost:8000/health
+
+### API 使用示例
+
+```bash
+# 简单提问
+curl -X POST "http://localhost:8000/ask" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What is Python?"}'
+```
+
+详细部署说明请参考 [API_DEPLOY.md](API_DEPLOY.md)
 
 ## 开发
 
