@@ -31,13 +31,12 @@ print(f"Initializing Perplexity Agent...")
 logging.info(f"Initializing Perplexity Agent")
 
 try:
-    # Get API key from environment variable, with default fallback
-    # API key removed - use PERPLEXITY_API_KEY environment variable
+    # Get API key from environment variable (required)
     api_key = os.environ.get("PERPLEXITY_API_KEY")
     if not api_key:
         raise ValueError(
             "PERPLEXITY_API_KEY environment variable is required. "
-            "Please set it using: export PERPLEXITY_API_KEY=your_api_key_here"
+            "Please set it using: export PERPLEXITY_API_KEY='your_api_key_here'"
         )
     agent = PerplexityAgent(api_key=api_key)
     print("--- Perplexity Agent Initialized Successfully ---")
