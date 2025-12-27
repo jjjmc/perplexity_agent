@@ -1,38 +1,33 @@
-# Perplexity Agent
+# A2Z Perplexity Agent (MCP)
 
-一个支持外部调用的 Perplexity AI Agent，提供简单易用的 Python API 和命令行工具。
+一个基于 MCP (Model Context Protocol) 的 Perplexity AI 搜索 Agent，提供强大的网络搜索和信息查询能力。
 
 ## 功能特性
 
-- 🚀 简单易用的 Python API
-- 💻 命令行工具支持
-- 🔧 灵活的配置选项
-- 📝 完整的类型提示支持
-- 🛡️ 完善的错误处理
+- 🔍 实时网络搜索
+- 💬 多轮对话支持
+- 📊 完整响应（包含引用和元数据）
+- 🚀 基于 MCP 协议，易于集成
 
 ## 安装
-
-### 使用 Poetry（推荐）
-
-```bash
-# 安装 Poetry（如果还没有安装）
-curl -sSL https://install.python-poetry.org | python3 -
-
-# 安装依赖
-poetry install
-```
 
 ### 使用 pip
 
 ```bash
-pip install -e .
+pip install -r requirements.txt
+```
+
+### 使用 Poetry
+
+```bash
+poetry install
 ```
 
 ## 配置
 
-### 环境变量
+### 环境变量（可选）
 
-创建 `.env` 文件或设置环境变量：
+如果未设置环境变量，将使用默认的 API key。
 
 ```bash
 export PERPLEXITY_API_KEY="your_api_key_here"
@@ -44,148 +39,74 @@ export PERPLEXITY_API_KEY="your_api_key_here"
 PERPLEXITY_API_KEY=your_api_key_here
 ```
 
-## 使用方法
+## MCP Server 使用
 
-### Python API
+### 启动 MCP 服务器
 
-#### 基本使用
+```bash
+# 方式1: 使用启动脚本（推荐）
+bash run_mcp_server.sh [port]
+
+# 方式2: 使用 uvicorn
+uvicorn server:app --host 0.0.0.0 --port 7004
+
+# 方式3: 直接运行
+python server.py --port 7004
+```
+
+### MCP 接口地址
+
+- 本地: `http://127.0.0.1:7004/mcp`
+- 生产环境: `https://agent.deepnlp.org/container/aiagenta2z/perplexity_agent/mcp`
+
+### 提供的 MCP Tools
+
+1. **perplexity_search**: 简单搜索，返回文本答案
+   - 参数: `question` (必需), `model`, `temperature`, `max_tokens`
+   - 返回: 包含答案、模型、问题和状态消息的字典
+
+2. **perplexity_chat**: 多轮对话
+   - 参数: `messages` (必需), `model`, `temperature`, `max_tokens`
+   - 返回: 包含完整响应、答案、模型和状态消息的字典
+
+3. **perplexity_search_full**: 完整响应（包含元数据、引用等）
+   - 参数: `question` (必需), `model`, `temperature`, `max_tokens`
+   - 返回: 包含完整 API 响应、答案、模型、问题和状态消息的字典
+
+### MCP 使用示例
+
+通过 MCP 客户端调用：
 
 ```python
-from perplexity_agent import PerplexityAgent
+# 简单搜索
+result = mcp_client.call_tool("perplexity_search", {
+    "question": "What is the latest news about AI?",
+    "model": "sonar-reasoning"
+})
 
-# 初始化 agent（API key 从环境变量读取）
-agent = PerplexityAgent()
+# 多轮对话
+result = mcp_client.call_tool("perplexity_chat", {
+    "messages": [
+        {"role": "user", "content": "What is Python?"},
+        {"role": "assistant", "content": "Python is a programming language."},
+        {"role": "user", "content": "What are its main features?"}
+    ]
+})
 
-# 简单提问
-answer = agent.ask("What is the capital of France?")
-print(answer)
-
-# 获取完整响应
-full_response = agent.get_full_response("Explain quantum computing")
-print(full_response)
+# 获取完整响应（包含引用和元数据）
+result = mcp_client.call_tool("perplexity_search_full", {
+    "question": "Explain quantum computing",
+    "model": "sonar-reasoning"
+})
 ```
 
-#### 自定义参数
+## 支持的模型
 
-```python
-agent = PerplexityAgent(api_key="your-api-key")
-
-# 使用自定义参数
-answer = agent.ask(
-    question="Write a poem about AI",
-    model="sonar-reasoning",
-    temperature=0.7,
-    max_tokens=200,
-)
-```
-
-#### 多轮对话
-
-```python
-messages = [
-    {"role": "user", "content": "What is Python?"},
-    {"role": "assistant", "content": "Python is a programming language."},
-    {"role": "user", "content": "What are its main features?"},
-]
-
-response = agent.chat(messages=messages)
-print(response["choices"][0]["message"]["content"])
-```
-
-### 命令行工具
-
-#### 基本使用
-
-```bash
-# 使用命令行参数
-perplexity-agent "What is the capital of France?"
-
-# 从标准输入读取
-echo "What is Python?" | perplexity-agent
-
-# 使用管道
-cat question.txt | perplexity-agent
-```
-
-#### 高级选项
-
-```bash
-# 指定模型
-perplexity-agent "Explain AI" --model sonar-reasoning
-
-# 调整温度参数
-perplexity-agent "Write a poem" --temperature 0.7
-
-# 限制最大 token 数
-perplexity-agent "Summarize this" --max-tokens 200
-
-# 输出完整 JSON 响应
-perplexity-agent "What is Python?" --full-response
-
-# 指定 API key
-perplexity-agent "Hello" --api-key your-api-key
-```
-
-## 示例
-
-运行示例代码：
-
-```bash
-poetry run python example.py
-```
-
-或者：
-
-```bash
-python example.py
-```
-
-## API 参考
-
-### PerplexityAgent
-
-#### `__init__(api_key=None, base_url=None)`
-
-初始化 Perplexity Agent。
-
-**参数：**
-- `api_key` (str, optional): Perplexity API key。如果不提供，将从环境变量 `PERPLEXITY_API_KEY` 读取。
-- `base_url` (str, optional): API 基础 URL。默认为 Perplexity chat completions 端点。
-
-#### `ask(question, model="sonar-reasoning", temperature=0.2, max_tokens=None, **kwargs)`
-
-提问并获取文本回答。
-
-**参数：**
-- `question` (str): 要问的问题。
-- `model` (str): 使用的模型。默认为 `sonar-reasoning`。
-- `temperature` (float): 采样温度（0.0 到 1.0）。默认为 0.2。
-- `max_tokens` (int, optional): 生成的最大 token 数。
-- `**kwargs`: 传递给 API 的额外参数。
-
-**返回：**
-- `str`: 助手的文本回答。
-
-#### `get_full_response(question, model="sonar-reasoning", temperature=0.2, max_tokens=None, **kwargs)`
-
-提问并获取完整的 API 响应。
-
-**参数：**
-- 同 `ask()` 方法。
-
-**返回：**
-- `dict`: 完整的 API 响应字典。
-
-#### `chat(messages, model="sonar-reasoning", temperature=0.2, max_tokens=None, **kwargs)`
-
-发送聊天完成请求到 Perplexity API。
-
-**参数：**
-- `messages` (List[Dict[str, str]]): 消息列表，每个消息包含 `role` 和 `content` 键。
-- 其他参数同 `ask()` 方法。
-
-**返回：**
-- `dict`: API 响应字典。
+- `sonar-reasoning` (默认)
+- `sonar`
+- `llama-3.1-sonar-small-128k-online`
+- `llama-3.1-sonar-large-128k-online`
+- `llama-3.1-sonar-huge-128k-online`
 
 ## 项目结构
 
@@ -194,47 +115,14 @@ perplexity_agent/
 ├── perplexity_agent/
 │   ├── __init__.py      # 包初始化
 │   ├── agent.py         # 核心 Agent 类
-│   ├── cli.py           # 命令行接口
-│   └── api.py           # Web API 服务
-├── example.py           # 使用示例
+│   └── agent.json       # Agent 配置
+├── server.py            # MCP 服务器主文件
+├── run_mcp_server.sh    # MCP 服务器启动脚本
 ├── requirements.txt     # pip 依赖文件
 ├── pyproject.toml       # Poetry 配置文件
-├── API_DEPLOY.md        # API 部署文档
 ├── README.md           # 项目文档
 └── .gitignore          # Git 忽略文件
 ```
-
-## API 部署
-
-将 Agent 部署为 Web API 服务，支持 HTTP 调用。
-
-### 快速开始
-
-```bash
-# 1. 安装依赖
-pip install -r requirements.txt
-
-# 2. 设置 API key
-export PERPLEXITY_API_KEY="your-api-key"
-
-# 3. 启动服务
-uvicorn perplexity_agent.api:app --host 0.0.0.0 --port 8000
-```
-
-启动后访问：
-- API 文档: http://localhost:8000/docs
-- 健康检查: http://localhost:8000/health
-
-### API 使用示例
-
-```bash
-# 简单提问
-curl -X POST "http://localhost:8000/ask" \
-  -H "Content-Type: application/json" \
-  -d '{"question": "What is Python?"}'
-```
-
-详细部署说明请参考 [API_DEPLOY.md](API_DEPLOY.md)
 
 ## 开发
 
@@ -255,12 +143,6 @@ poetry run ruff check .
 
 ```bash
 poetry run mypy perplexity_agent
-```
-
-### 运行测试
-
-```bash
-poetry run pytest
 ```
 
 ## 许可证
